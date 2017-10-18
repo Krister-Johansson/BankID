@@ -13,7 +13,7 @@ bankid.on('connecting', function () {
 
 bankid.on('connected', function () {
     console.log('Connection success!');
-    bankid.Authenticate({ personalNumber: '198602262415' });
+    bankid.Sign({ personalNumber: 'yyyymmddxxxx', userVisibleData: 'The user sign message' });
     timer = setInterval(function(){},10000);
 });
 
@@ -24,9 +24,8 @@ bankid.on('error', function (err) {
 });
 
 bankid.on('complete', function (data) {
-    console.log('Loggin!');
     console.log('Hello, ' + data.userInfo.name + '!');
-    console.log('You are logged in with ssn: ' + data.userInfo.personalNumber);
+    console.log('You have successfully signed the request');
     clearInterval(timer);
 });
 

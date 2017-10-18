@@ -89,6 +89,28 @@ BankID.prototype.Authenticate = function (options) {
     });
 }
 
+BankID.prototype.Sign = function (options) {
+    const self = this;
+
+    var params = {
+        personalNumber: options.personalNumber,
+        endUserInfo: options.endUserInfo ? options.endUserInfo : undefined,
+        requirementAlternatives: options.requirementAlternatives ? options.requirementAlternatives : undefined,
+        userVisibleData: _btoa(options.userVisibleData),
+        userNonVisibleData: options.userNonVisibleData ? options.userNonVisibleData : undefined,
+    }
+
+    self.client.Sign(params, (err, result, raw, soapHeader) => {
+        if (err) {
+            self.emit('error', _getErrorDetails(err));
+            clearInterval(self.checkStatus);
+        } else {
+            self.emit('sign', result);
+            self.Collect(result.orderRef);
+        }
+    });
+}
+
 BankID.prototype.Collect = function (orderRef) {
     const self = this;
     self.checkStatus = setInterval(function () {
@@ -99,26 +121,26 @@ BankID.prototype.Collect = function (orderRef) {
             } else {
                 switch (result.progressStatus) {
                     case 'OUTSTANDING_TRANSACTION':
-                        self.emit('authenticate.outstanding_transaction', result);
+                        self.emit('outstanding_transaction', result);
                         break;
                     case 'NO_CLIENT':
-                        self.emit('authenticate.no_client', result);
+                        self.emit('no_client', result);
                         break;
                     case 'STARTED':
-                        self.emit('authenticate.started', result);
+                        self.emit('started', result);
                         break;
                     case 'USER_SIGN':
-                        self.emit('authenticate.user_sign', result);
+                        self.emit('user_sign', result);
                         break;
                     case 'USER_REQ':
-                        self.emit('authenticate.user_req', result);
+                        self.emit('user_req', result);
                         break;
                     case 'COMPLETE':
-                        self.emit('authenticate.complete', result);
+                        self.emit('complete', result);
                         clearInterval(self.checkStatus);
                         break;
                     default:
-                        self.emit('authenticate.error', { status: 'COLLECT', description: 'Unable to find progressStatus' });
+                        self.emit('error', { status: 'COLLECT', description: 'Unable to find progressStatus' });
                         clearInterval(self.checkStatus);
                         break;
                 }
